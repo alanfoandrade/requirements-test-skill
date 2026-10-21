@@ -1,6 +1,6 @@
 # requirements-test
 
-Skill do [Claude Code](https://claude.com/claude-code) que testa uma implementação contra um documento de requisitos em Markdown (PRD, task, user stories) e gera um relatório do que passou, falhou, foi bloqueado ou não foi implementado, em Markdown e HTML interativo. Cada falha vem com o motivo e a sugestão de correção.
+Skill do [Claude Code](https://claude.com/claude-code) que testa uma implementação contra um documento de requisitos em Markdown (PRD, task, user stories) ou uma task do ClickUp, cruzando com as specs do repositório quando existirem, e gera um relatório do que passou, falhou, foi bloqueado ou não foi implementado, em Markdown e HTML interativo. Cada falha vem com o motivo e a sugestão de correção.
 
 ## Instalação
 
@@ -16,6 +16,7 @@ Dentro do chat do Claude Code, na pasta do repositório:
 
 ```
 /requirements-test "requisitos.md" --repos ../api,../sdk --html
+/requirements-test https://app.clickup.com/t/<workspace>/<ID-DA-TASK> --repos ../api --html
 ```
 
 O guia completo, com todas as opções, está em [COMO-USAR.md](COMO-USAR.md).

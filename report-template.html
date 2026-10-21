@@ -121,7 +121,7 @@ footer{color:var(--muted);font-size:12px}
 /* Substitua apenas este bloco.
    Veredito do requisito (s): pass | partial | fail | blocked | untested. Todo requisito que não passou precisa de exp (o que pede), got (o que foi encontrado), obs (a causa) e, quando houver, fix.
    Resultado do caso (r): pass | fail | blocked | skip.
-   sev: Crítico | Alto | Médio | Baixo. Listas opcionais: comparison, notImplemented, outOfScope, limits, createdTests, nextSteps (strings ou {t,d}). */
+   sev: Crítico | Alto | Médio | Baixo. Listas opcionais: comparison, notImplemented, openDecisions, outOfScope, limits, createdTests, nextSteps (strings ou {t,d}). */
 const DATA = {
   title: 'Relatório de testes',
   subtitle: 'Documento de requisitos testado e resumo em uma linha.',
@@ -139,6 +139,7 @@ const DATA = {
     {sev:'Alto', t:'Título', where:'repo:arquivo:linha', req:'REQ-01', d:'Passos para reproduzir e esperado × obtido.', fix:'Correção sugerida.'}
   ],
   notImplemented: [],
+  openDecisions: [],
   outOfScope: [],
   limits: [],
   createdTests: [],
@@ -156,7 +157,7 @@ const SEVS={'Crítico':'Alto','Alto':'Alto','Médio':'Médio','Baixo':'Baixo'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const R=DATA.requirements||[], T=DATA.tests||[], D=DATA.defects||[];
-const LISTS=[['comparison','Comparação com a execução anterior'],['notImplemented','Não implementado'],['outOfScope','Fora de escopo e divergências'],['limits','Bloqueios e limitações'],['createdTests','Testes criados'],['nextSteps','Próximos passos']].filter(([k])=>(DATA[k]||[]).length);
+const LISTS=[['comparison','Comparação com a execução anterior'],['notImplemented','Não implementado'],['openDecisions','Decisões em aberto'],['outOfScope','Fora de escopo e divergências'],['limits','Bloqueios e limitações'],['createdTests','Testes criados'],['nextSteps','Próximos passos']].filter(([k])=>(DATA[k]||[]).length);
 const counts={pass:0,partial:0,fail:0,blocked:0,untested:0};R.forEach(r=>{if(counts[r.s]!==undefined)counts[r.s]++});
 const tcounts={pass:0,fail:0,blocked:0,skip:0};T.forEach(t=>{if(tcounts[t.r]!==undefined)tcounts[t.r]++});
 const executed=counts.pass+counts.partial+counts.fail;
