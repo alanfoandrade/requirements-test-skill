@@ -8,15 +8,16 @@ Funciona em qualquer repositório. Os requisitos podem vir de um arquivo `.md` o
 
 | O que | Como |
 |---|---|
-| Claude Code instalado | Abra o terminal na pasta do repositório e rode `claude`. |
-| Skill instalada | Fica em `~/.claude/skills/requirements-test/`. Ela só aparece em sessões abertas depois de existir. |
-| Requisitos | Um `.md` com as histórias, regras e critérios de aceite, **ou** a URL de uma task do ClickUp. Para usar a URL, o conector do ClickUp precisa estar ativo no Claude (em claude.ai, nas configurações de conectores, ou como servidor MCP). Se estiver em PDF, converta para `.md`. |
+| Claude Code ou Codex | Abra o agente na pasta do repositório auditado. |
+| Skill instalada | Claude Code: `~/.claude/skills/requirements-test/`; Codex: `~/.agents/skills/requirements-test/`. Para instalação por projeto, use `.claude/skills/requirements-test/` ou `.agents/skills/requirements-test/`. Veja o [README](README.md). |
+| Node.js e Git | Executam o gerador de relatório e as consultas ao repositório. |
+| Requisitos | Um `.md` com as histórias, regras e critérios de aceite, **ou** a URL de uma task do ClickUp. Para usar a URL, configure uma integração/API autenticada no agente. Os nomes e recursos das ferramentas variam; sem acesso, passe uma exportação `.md`. Se estiver em PDF, converta para `.md`. |
 | Token do SDK privado (se o projeto usar) | `export NODE_AUTH_TOKEN="seu_token"` no terminal, antes de abrir o `claude`. Precisa ser um PAT do GitHub com `read:packages`, autorizado no SSO da organização. Nunca cole o token no chat. |
 | Yarn (se o projeto usar) | `corepack enable`, ou `npx --yes yarn@1.22.22 <comando>`. |
 
 ## 2. Como chamar
 
-O comando começa com `/` e vale **só dentro do chat do Claude Code**. No terminal comum (zsh) ele dá "no such file or directory".
+No Claude Code, o pedido começa com `/requirements-test`; no Codex, com `$requirements-test`. Ambos são invocações no chat do agente, não comandos do terminal comum (zsh).
 
 ```
 cd /caminho/do/repositorio
@@ -33,6 +34,13 @@ Com uma task do ClickUp no lugar do arquivo:
 
 ```
 /requirements-test https://app.clickup.com/t/<workspace>/DEMO-100 --repos ../api --html
+```
+
+No chat do Codex:
+
+```text
+$requirements-test "requisitos.md" --repos ../api,../sdk --html
+$requirements-test https://app.clickup.com/t/DEMO-100 --repos ../api --html
 ```
 
 Se o nome do arquivo tem espaço, use aspas. Você também pode pedir em linguagem natural: "teste a implementação com base em `requisitos.md` e gere o HTML".
@@ -59,7 +67,7 @@ Se o nome do arquivo tem espaço, use aspas. Você também pode pedir em linguag
 
 ## 3. O que a skill faz
 
-0. Se já existe `results.json` e os commits são os mesmos, não refaz os testes (use `--force` para obrigar).
+0. Se já existe `results.json`, o commit é o mesmo do PR no remoto, a cópia não tem alterações locais e as fontes não mudaram, não refaz os testes e cita a execução de origem. Use `--force` para refazer.
 1. Lê os requisitos e mantém os IDs do documento. Com task do ClickUp, lê descrição, subtasks, checklists e comentários e grava tudo em `requirements.md`. Descobre como cada repositório guarda as specs (veja a seção 4), acha a spec e o PR ligados à task e aponta as divergências entre eles.
 2. Monta o plano de testes (`test-plan.md`).
 3. Reconhece o ambiente de cada repositório (stack, comandos, variáveis).
@@ -98,6 +106,10 @@ Cada repositório organiza os requisitos de um jeito, e a skill não presume cam
 A spec certa é a que cita o ID da task, ou a que o nome da branch e a descrição do PR indicam. A spec pode estar em outro repositório da lista, por exemplo a do front guardada no repositório da API. Se nada citar o ID, a skill mostra as candidatas e pergunta.
 
 Quando task e spec discordam, nenhuma vence automaticamente. O relatório mostra o que cada fonte diz e quem decide.
+
+Um comentário mais recente pode ser só uma pergunta ou sugestão. Ele só altera o requisito quando houver decisão confirmada, com origem e indicação da regra substituída. Marcar um comentário como resolvido, sem confirmar a regra na resposta, não basta. As dúvidas continuam em `openDecisions`.
+
+“Fora do escopo desta entrega” não significa “proibido no produto”. O plano distingue trabalho não incluído, comportamento existente a preservar e proibição explícita. Só a proibição confirmada justifica exigir ausência da funcionalidade.
 
 ## 5. Publicar na task do ClickUp
 
@@ -141,8 +153,9 @@ Para banco, a skill sobe um Postgres descartável local, roda as migrations reai
 ## 8. Gastar menos tokens
 
 - Rode em **conversa nova**. Conversa longa recarrega todo o histórico a cada resposta.
-- Se o código, a task e as specs não mudaram desde a última execução, a skill percebe sozinha e para. Com task do ClickUp, ela só confere a data de atualização e reaproveita o `requirements.md`. Para só conferir o ambiente, use `--only static`.
+- Quando o commit do PR, a cópia local e as fontes continuam iguais, a skill reaproveita os resultados e o snapshot `requirements.md`, citando a execução original. Para só conferir typecheck, lint e build, use `--only static`.
 - Use `--only failed` depois de correções, para retestar só o que falhou.
+- Com `--only`, um resultado anterior invalidado fora do recorte fica Não testado, com o motivo; ele não herda um “Passou” obsoleto.
 - Para tarefas mecânicas, troque para um modelo menor com `/model`. Volte ao modelo mais forte para decidir o que é bug.
 - Use `/compact` entre etapas de uma sessão longa.
 
@@ -160,17 +173,17 @@ Para banco, a skill sobe um Postgres descartável local, roda as migrations reai
 
 | Sintoma | Causa e solução |
 |---|---|
-| `zsh: no such file or directory: /requirements-test` | O comando foi digitado no terminal. Digite dentro do chat do `claude`. |
-| A skill não aparece | A sessão foi aberta antes da skill existir. Feche e abra o `claude` de novo. |
+| `zsh: no such file or directory: /requirements-test` | O pedido foi digitado no terminal. Use `/requirements-test` no chat do Claude Code ou `$requirements-test` no chat do Codex. |
+| A skill não aparece | Confira o caminho de instalação do agente e abra uma nova sessão. |
 | `yarn: command not found` | `corepack enable`, ou `npx --yes yarn@1.22.22 install`. |
 | `EACCES` ao instalar o yarn globalmente | Sem permissão em `/usr/local`. Use `npx` ou configure `npm config set prefix ~/.npm-global`. |
 | `401` ao instalar pacote privado | Falta `NODE_AUTH_TOKEN`, o token não tem `read:packages` ou falta autorizar o SSO. Rode o `export` na mesma janela do terminal. |
 | `tsc` com erros de `test-reports/` | Os testes de API gerados ficam dentro do repositório do front. Mova a pasta de relatórios para fora ao rodar `tsc` ou lint. |
 | Muitos "Bloqueado" | Falta ambiente: Keycloak, Redis, RabbitMQ ou credenciais. O relatório diz o que faltou, na seção "Bloqueios e limitações". |
-| "Conector do ClickUp indisponível" | O ClickUp não está conectado nesta sessão. Ative o conector em claude.ai ou passe o `.md` exportado. |
+| "Conector do ClickUp indisponível" | Não há acesso ao ClickUp nesta sessão. Configure uma integração/API autenticada no agente ou passe o `.md` exportado. |
 | Spec errada ou não encontrada | Nada no repositório cita o ID da task. Indique com `--specs <caminho>`. |
 | PR não encontrado | A branch e a descrição do PR não citam o ID da task. Indique com `--pr <url>`. |
-| A skill diz que nada mudou | Os commits são os mesmos da última execução. Use `--force` se quiser refazer. |
+| A skill diz que nada mudou | O commit do PR é o mesmo, a cópia não tem alterações locais e as fontes não mudaram; o relatório cita a execução de origem. Use `--force` se quiser refazer. |
 
 ## 11. Limites que você deve conhecer
 
