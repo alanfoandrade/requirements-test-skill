@@ -68,7 +68,7 @@ Se o nome do arquivo tem espaço, use aspas. Você também pode pedir em linguag
 ## 3. O que a skill faz
 
 0. Se já existe `results.json`, o commit é o mesmo do PR no remoto, a cópia não tem alterações locais e as fontes não mudaram, não refaz os testes e cita a execução de origem. Use `--force` para refazer.
-1. Lê os requisitos e mantém os IDs do documento. Com task do ClickUp, lê descrição, subtasks, checklists e comentários e grava tudo em `requirements.md`. Descobre como cada repositório guarda as specs (veja a seção 4), acha a spec e o PR ligados à task e aponta as divergências entre eles.
+1. Lê os requisitos e mantém os IDs do documento. Com task do ClickUp, lê descrição, subtasks, checklists e comentários e grava tudo em `requirements.md`, guardando no `results.json` a data de atualização e o último comentário de cada task lida, para saber na próxima execução se algo mudou. Descobre como cada repositório guarda as specs (veja a seção 4), acha a spec e o PR ligados à task e aponta as divergências entre eles.
 2. Monta o plano de testes (`test-plan.md`).
 3. Reconhece o ambiente de cada repositório (stack, comandos, variáveis).
 4. Roda os testes existentes, o typecheck, o lint e o build.

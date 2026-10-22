@@ -18,6 +18,13 @@ R.forEach(r => (r.tcs || []).forEach(c => { if (!tid.has(c)) errs.push(`requisit
 R.forEach(r => { if (r.s !== 'pass' && !(r.exp && r.got && r.obs && r.fix)) errs.push(`requisito ${r.id} (${r.s}) sem exp/got/obs/fix`); });
 if (errs.length) { console.error('Inconsistências:\n- ' + errs.join('\n- ')); process.exit(2); }
 
+// Fonte ClickUp: sem o estado de cada task lida, a próxima execução não sabe se a task mudou (passo 0).
+const S = D.source || {};
+if (S.type === 'clickup') {
+  const st = S.tasks || [], miss = st.filter(t => !t.dateUpdated || !('lastCommentId' in t) || !Array.isArray(t.subtaskIds));
+  if (!st.length || miss.length) console.warn(`aviso: source.tasks incompleto (${st.length} tasks, ${miss.length} sem dateUpdated/lastCommentId/subtaskIds); a próxima execução vai reler a task inteira.`);
+}
+
 const c = { pass: 0, partial: 0, fail: 0, blocked: 0, untested: 0 }; R.forEach(r => c[r.s]++);
 const ex = c.pass + c.partial + c.fail, pct = ex ? Math.round(c.pass / ex * 100) : 0, cov = R.length ? Math.round(ex / R.length * 100) : 0;
 const tc = { pass: 0, fail: 0, blocked: 0, skip: 0 }; T.forEach(t => tc[t.r]++);

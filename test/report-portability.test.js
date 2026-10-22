@@ -38,3 +38,23 @@ test('builds equivalent Markdown and HTML from two skill locations and another w
   assert.ok(fs.existsSync(path.join(mdOnly, 'test-report.md')));
   assert.equal(fs.existsSync(path.join(mdOnly, 'test-report.html')), false);
 });
+
+test('warns when a ClickUp source does not keep the state of every task read', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'requirements-source-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const base = {
+    title: 'Source state', requirements: [{ id: 'FR-001', name: 'x', s: 'pass', tcs: [] }], tests: [], defects: [],
+  };
+  const run = source => {
+    const input = path.join(root, 'results.json');
+    fs.writeFileSync(input, JSON.stringify({ ...base, source }));
+    return require('node:child_process').spawnSync(process.execPath, [path.resolve(__dirname, '../build-report.js'), input, root], { encoding: 'utf8' });
+  };
+  const partial = run({ type: 'clickup', tasks: [{ id: 'a', customId: 'X-1', dateUpdated: '1' }] });
+  assert.equal(partial.status, 0);
+  assert.match(partial.stderr, /source\.tasks incompleto \(1 tasks, 1 sem/);
+  const full = run({ type: 'clickup', tasks: [{ id: 'a', customId: 'X-1', parent: null, subtaskIds: ['b'], dateUpdated: '1', lastCommentId: null }, { id: 'b', customId: 'X-2', parent: 'a', subtaskIds: [], dateUpdated: '2', lastCommentId: '9' }] });
+  assert.equal(full.status, 0);
+  assert.doesNotMatch(full.stderr, /aviso/);
+  assert.doesNotMatch(run({ type: 'md', path: 'req.md' }).stderr, /aviso/);
+});
